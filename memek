@@ -1,0 +1,247 @@
+-- 99%W Panel Script - Fully Functional Version
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- UI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "WPanel"
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 320, 0, 500)
+MainFrame.Position = UDim2.new(0.05, 0, 0.05, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local Header = Instance.new("Frame", MainFrame)
+Header.Size = UDim2.new(1,0,0,30)
+Header.BackgroundColor3 = Color3.fromRGB(45,45,45)
+
+local Title = Instance.new("TextLabel", Header)
+Title.Text = "99%W"
+Title.Size = UDim2.new(1,-30,1,0)
+Title.Position = UDim2.new(0.05,0,0,0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.new(1,1,1)
+Title.TextScaled = true
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+local MinimizeButton = Instance.new("TextButton", Header)
+MinimizeButton.Text = "-"
+MinimizeButton.Size = UDim2.new(0,30,1,0)
+MinimizeButton.Position = UDim2.new(1,-30,0,0)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(100,100,100)
+MinimizeButton.TextColor3 = Color3.new(1,1,1)
+MinimizeButton.TextScaled = true
+
+local Content = Instance.new("Frame", MainFrame)
+Content.Size = UDim2.new(1,0,1,-30)
+Content.Position = UDim2.new(0,0,0,30)
+Content.BackgroundTransparency = 1
+
+-- FPS
+local fpsLabel = Instance.new("TextLabel", Header)
+fpsLabel.Size = UDim2.new(0,100,1,0)
+fpsLabel.Position = UDim2.new(0.5,-50,0,0)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.TextColor3 = Color3.fromRGB(255,255,0)
+fpsLabel.TextScaled = true
+fpsLabel.Text = "FPS: 0"
+
+-- Toggles
+local function createToggle(name,y)
+    local frame = Instance.new("Frame",Content)
+    frame.Size = UDim2.new(1,-10,0,30)
+    frame.Position = UDim2.new(0,5,0,y)
+    frame.BackgroundTransparency = 1
+
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(0,50,1,0)
+    btn.Position = UDim2.new(0,0,0,0)
+    btn.Text = "Off"
+    btn.BackgroundColor3 = Color3.fromRGB(170,0,0)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.TextScaled = true
+
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1,-60,1,0)
+    label.Position = UDim2.new(0,60,0,0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.new(1,1,1)
+    label.Text = name
+    label.TextScaled = true
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local state = false
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.Text = state and "On" or "Off"
+        btn.BackgroundColor3 = state and Color3.fromRGB(0,170,0) or Color3.fromRGB(170,0,0)
+    end)
+
+    return function() return state end
+end
+
+local espPlayersToggle = createToggle("ESP Players & Distance",5)
+local espGunsToggle = createToggle("ESP Guns",45)
+local aimStickToggle = createToggle("Aim Stick (Body)",85)
+local headAimToggle = createToggle("Head-Mounted Aim",125)
+local noClipToggle = createToggle("No Clip / Wall Hack",165)
+
+-- WalkSpeed & JumpPower
+local WalkSpeedBox = Instance.new("TextBox", Content)
+WalkSpeedBox.PlaceholderText = "WalkSpeed"
+WalkSpeedBox.Size = UDim2.new(0.45,-5,0,30)
+WalkSpeedBox.Position = UDim2.new(0,5,0,205)
+WalkSpeedBox.ClearTextOnFocus = false
+
+local JumpPowerBox = Instance.new("TextBox", Content)
+JumpPowerBox.PlaceholderText = "JumpPower"
+JumpPowerBox.Size = UDim2.new(0.45,-5,0,30)
+JumpPowerBox.Position = UDim2.new(0.5,0,0,205)
+JumpPowerBox.ClearTextOnFocus = false
+
+local ApplyButton = Instance.new("TextButton", Content)
+ApplyButton.Text = "Apply"
+ApplyButton.Size = UDim2.new(1,-10,0,30)
+ApplyButton.Position = UDim2.new(0,5,0,245)
+ApplyButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
+ApplyButton.TextColor3 = Color3.new(1,1,1)
+ApplyButton.TextScaled = true
+
+ApplyButton.MouseButton1Click:Connect(function()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        local ws = tonumber(WalkSpeedBox.Text)
+        local jp = tonumber(JumpPowerBox.Text)
+        if ws then hum.WalkSpeed = ws end
+        if jp then hum.JumpPower = jp end
+    end
+end)
+
+-- Minimize
+local minimized = false
+MinimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    Content.Visible = not minimized
+end)
+
+-- Aim FOV
+local fovLabel = Instance.new("TextLabel", Content)
+fovLabel.Text = "Aim FOV: 50"
+fovLabel.Size = UDim2.new(1,-10,0,20)
+fovLabel.Position = UDim2.new(0,5,0,285)
+fovLabel.BackgroundTransparency = 1
+fovLabel.TextColor3 = Color3.new(1,1,1)
+fovLabel.TextScaled = true
+fovLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local fovSlider = Instance.new("TextBox", Content)
+fovSlider.PlaceholderText = "0-100"
+fovSlider.Size = UDim2.new(1,-10,0,30)
+fovSlider.Position = UDim2.new(0,5,0,310)
+fovSlider.Text = "50"
+
+local function getFOV()
+    local val = tonumber(fovSlider.Text) or 50
+    fovLabel.Text = "Aim FOV: "..val
+    return math.clamp(val,0,100)
+end
+
+-- ESP Folder
+local espFolder = Instance.new("Folder", ScreenGui)
+espFolder.Name = "ESPFolder"
+
+-- Simple ESP
+local function updateESP()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            local root = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                local esp = espFolder:FindFirstChild("ESP_"..p.Name)
+                if espPlayersToggle() then
+                    if not esp then
+                        esp = Instance.new("BillboardGui")
+                        esp.Name = "ESP_"..p.Name
+                        esp.Size = UDim2.new(0,100,0,50)
+                        esp.Adornee = root
+                        esp.AlwaysOnTop = true
+                        local txt = Instance.new("TextLabel",esp)
+                        txt.Size = UDim2.new(1,0,1,0)
+                        txt.BackgroundTransparency = 1
+                        txt.TextColor3 = Color3.new(1,0,0)
+                        txt.TextScaled = true
+                        esp.Parent = espFolder
+                    end
+                    esp.Adornee = root
+                    esp.TextLabel.Text = p.Name.." | "..math.floor((LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude).." studs"
+                elseif esp then
+                    esp:Destroy()
+                end
+            end
+        end
+    end
+end
+
+-- Aim Stick (Head Lock)
+local function getClosestTarget()
+    local shortest = math.huge
+    local closest = nil
+    local fov = getFOV()*10
+    local mouse = UserInputService:GetMouseLocation()
+    for _,p in pairs(Players:GetPlayers()) do
+        if p~=LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+            local head = p.Character.Head
+            local pos,onscreen = Camera:WorldToViewportPoint(head.Position)
+            if onscreen then
+                local dist = (Vector2.new(pos.X,pos.Y)-Vector2.new(mouse.X,mouse.Y)).Magnitude
+                if dist<fov and dist<shortest then
+                    shortest = dist
+                    closest = p
+                end
+            end
+        end
+    end
+    return closest
+end
+
+-- No Clip / Wall Hack
+RunService.RenderStepped:Connect(function()
+    for _,v in pairs(Workspace:GetDescendants()) do
+        if v:IsA("BasePart") and v.CanCollide and v.Name ~= "HumanoidRootPart" and v.Name ~= "Baseplate" and v.Name ~= "Floor" then
+            if noClipToggle() then
+                v.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- FPS Counter
+local last = tick()
+local frames = 0
+RunService.RenderStepped:Connect(function()
+    frames = frames + 1
+    if tick()-last>=1 then
+        fpsLabel.Text = "FPS: "..frames
+        frames = 0
+        last = tick()
+    end
+end)
+
+-- Main loop
+RunService.RenderStepped:Connect(function()
+    updateESP()
+    if aimStickToggle() or headAimToggle() then
+        local target = getClosestTarget()
+        if target and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local root = LocalPlayer.Character.HumanoidRootPart
+            local head = target.Character.Head
+            -- move towards head
+            root.CFrame = CFrame.new(root.Position, head.Position)
+        end
+    end
+end)
