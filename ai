@@ -1,0 +1,171 @@
+--[[ 
+99%W Panel Script for Roblox FPS Game
+Features:
+- Movable & minimizable panel
+- ESP for players, distance, gun ESP
+- Set WalkSpeed & JumpPower
+- Updates enemy distances every frame
+- Server list updated every second
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService") -- for server list updates if needed
+
+local localPlayer = Players.LocalPlayer
+local mouse = localPlayer:GetMouse()
+
+-- UI Creation
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "WPanel"
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 300, 0, 400)
+MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Name = "MainFrame"
+
+local Header = Instance.new("Frame", MainFrame)
+Header.Size = UDim2.new(1, 0, 0, 30)
+Header.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+local Title = Instance.new("TextLabel", Header)
+Title.Text = "99%W"
+Title.Size = UDim2.new(1, -30, 1, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+Title.Font = Enum.Font.SourceSansBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Position = UDim2.new(0.05, 0, 0, 0)
+
+local MinimizeButton = Instance.new("TextButton", Header)
+MinimizeButton.Text = "-"
+MinimizeButton.Size = UDim2.new(0, 30, 1, 0)
+MinimizeButton.Position = UDim2.new(1, -30, 0, 0)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.TextScaled = true
+
+local Content = Instance.new("Frame", MainFrame)
+Content.Size = UDim2.new(1, 0, 1, -30)
+Content.Position = UDim2.new(0, 0, 0, 30)
+Content.BackgroundTransparency = 1
+
+-- Features UI
+local WalkSpeedBox = Instance.new("TextBox", Content)
+WalkSpeedBox.PlaceholderText = "Set WalkSpeed"
+WalkSpeedBox.Size = UDim2.new(0.45, -5, 0, 30)
+WalkSpeedBox.Position = UDim2.new(0, 5, 0, 5)
+WalkSpeedBox.ClearTextOnFocus = false
+WalkSpeedBox.Text = tostring(localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Humanoid") and localPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed or 16)
+
+local JumpPowerBox = Instance.new("TextBox", Content)
+JumpPowerBox.PlaceholderText = "Set JumpPower"
+JumpPowerBox.Size = UDim2.new(0.45, -5, 0, 30)
+JumpPowerBox.Position = UDim2.new(0.5, 0, 0, 5)
+JumpPowerBox.ClearTextOnFocus = false
+JumpPowerBox.Text = tostring(localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Humanoid") and localPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower or 50)
+
+local UpdateButton = Instance.new("TextButton", Content)
+UpdateButton.Text = "Apply"
+UpdateButton.Size = UDim2.new(1, -10, 0, 30)
+UpdateButton.Position = UDim2.new(0, 5, 0, 45)
+UpdateButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+UpdateButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+UpdateButton.TextScaled = true
+
+-- Minimize Toggle
+local minimized = false
+MinimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    Content.Visible = not minimized
+end)
+
+-- Apply WalkSpeed / JumpPower
+UpdateButton.MouseButton1Click:Connect(function()
+    local hum = localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        local ws = tonumber(WalkSpeedBox.Text)
+        local jp = tonumber(JumpPowerBox.Text)
+        if ws then hum.WalkSpeed = ws end
+        if jp then hum.JumpPower = jp end
+    end
+end)
+
+-- ESP
+local espFolder = Instance.new("Folder", ScreenGui)
+espFolder.Name = "ESPFolder"
+
+local function createESP(player)
+    if player == localPlayer then return end
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ESP_" .. player.Name
+    billboard.Adornee = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    billboard.Size = UDim2.new(0, 100, 0, 50)
+    billboard.AlwaysOnTop = true
+
+    local text = Instance.new("TextLabel", billboard)
+    text.Size = UDim2.new(1,0,1,0)
+    text.BackgroundTransparency = 1
+    text.TextColor3 = Color3.new(1,0,0)
+    text.TextScaled = true
+
+    billboard.Parent = espFolder
+end
+
+local function updateESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if not espFolder:FindFirstChild("ESP_"..player.Name) then
+            createESP(player)
+        end
+        local esp = espFolder:FindFirstChild("ESP_"..player.Name)
+        if esp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            esp.Adornee = player.Character.HumanoidRootPart
+            local distance = (localPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            esp.TextLabel.Text = player.Name.." | "..math.floor(distance).." studs"
+        end
+    end
+end
+
+-- Gun ESP (assumes tools are in Workspace)
+local function updateGunESP()
+    for _, tool in pairs(workspace:GetDescendants()) do
+        if tool:IsA("Tool") and not espFolder:FindFirstChild("Gun_"..tool.Name) then
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "Gun_"..tool.Name
+            billboard.Adornee = tool:FindFirstChild("Handle")
+            billboard.Size = UDim2.new(0,100,0,30)
+            billboard.AlwaysOnTop = true
+            local text = Instance.new("TextLabel", billboard)
+            text.Size = UDim2.new(1,0,1,0)
+            text.BackgroundTransparency = 1
+            text.Text = tool.Name
+            text.TextColor3 = Color3.new(0,1,0)
+            text.TextScaled = true
+            billboard.Parent = espFolder
+        end
+    end
+end
+
+-- Update loop
+RunService.RenderStepped:Connect(function()
+    if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        updateESP()
+        updateGunESP()
+    end
+end)
+
+-- Server list update every second (example: prints servers)
+spawn(function()
+    while true do
+        -- Here you could use HttpService to fetch servers if needed
+        print("Server list updated at", tick())
+        wait(1)
+    end
+end)
