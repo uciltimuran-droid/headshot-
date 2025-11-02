@@ -1,0 +1,267 @@
+--[[ 
+99%W Panel Script for Roblox FPS Game (Updated)
+Features:
+- Movable & minimizable panel
+- Toggle ESP (players, distance, guns)
+- WalkSpeed & JumpPower
+- Aim Stick (Body)
+- Head-Mounted Aim
+- Aim FOV (0-100%) fully functional while shooting
+- No Universal Clip / Wall Hack (floor exception)
+- Real-time FPS display
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- UI Creation
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "WPanel"
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 320, 0, 500)
+MainFrame.Position = UDim2.new(0.05, 0, 0.05, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local Header = Instance.new("Frame", MainFrame)
+Header.Size = UDim2.new(1, 0, 0, 30)
+Header.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+local Title = Instance.new("TextLabel", Header)
+Title.Text = "99%W"
+Title.Size = UDim2.new(1, -30, 1, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+Title.Font = Enum.Font.SourceSansBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Position = UDim2.new(0.05, 0, 0, 0)
+
+local MinimizeButton = Instance.new("TextButton", Header)
+MinimizeButton.Text = "-"
+MinimizeButton.Size = UDim2.new(0, 30, 1, 0)
+MinimizeButton.Position = UDim2.new(1, -30, 0, 0)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.TextScaled = true
+
+local Content = Instance.new("Frame", MainFrame)
+Content.Size = UDim2.new(1, 0, 1, -30)
+Content.Position = UDim2.new(0, 0, 0, 30)
+Content.BackgroundTransparency = 1
+
+-- FPS Display
+local fpsLabel = Instance.new("TextLabel", Header)
+fpsLabel.Size = UDim2.new(0, 100, 1, 0)
+fpsLabel.Position = UDim2.new(0.5, -50, 0, 0)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+fpsLabel.TextScaled = true
+fpsLabel.Text = "FPS: 0"
+
+-- Utility: Create Toggle
+local function createToggle(name, posY)
+    local frame = Instance.new("Frame", Content)
+    frame.Size = UDim2.new(1, -10, 0, 30)
+    frame.Position = UDim2.new(0, 5, 0, posY)
+    frame.BackgroundTransparency = 1
+
+    local button = Instance.new("TextButton", frame)
+    button.Size = UDim2.new(0, 50, 1, 0)
+    button.Position = UDim2.new(0, 0, 0, 0)
+    button.Text = "Off"
+    button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextScaled = true
+
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1, -60, 1, 0)
+    label.Position = UDim2.new(0, 60, 0, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Text = name
+    label.TextScaled = true
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local state = false
+    button.MouseButton1Click:Connect(function()
+        state = not state
+        button.Text = state and "On" or "Off"
+        button.BackgroundColor3 = state and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(170, 0, 0)
+    end)
+
+    return function() return state end
+end
+
+-- Toggles
+local espPlayersToggle = createToggle("ESP Players & Distance", 5)
+local espGunsToggle = createToggle("ESP Guns", 45)
+local aimStickToggle = createToggle("Aim Stick (Body)", 85)
+local headAimToggle = createToggle("Head-Mounted Aim", 125)
+local noClipToggle = createToggle("No Clip / Wall Hack", 165)
+
+-- WalkSpeed & JumpPower
+local WalkSpeedBox = Instance.new("TextBox", Content)
+WalkSpeedBox.PlaceholderText = "WalkSpeed"
+WalkSpeedBox.Size = UDim2.new(0.45, -5, 0, 30)
+WalkSpeedBox.Position = UDim2.new(0, 5, 0, 205)
+WalkSpeedBox.ClearTextOnFocus = false
+
+local JumpPowerBox = Instance.new("TextBox", Content)
+JumpPowerBox.PlaceholderText = "JumpPower"
+JumpPowerBox.Size = UDim2.new(0.45, -5, 0, 30)
+JumpPowerBox.Position = UDim2.new(0.5, 0, 0, 205)
+JumpPowerBox.ClearTextOnFocus = false
+
+local ApplyButton = Instance.new("TextButton", Content)
+ApplyButton.Text = "Apply"
+ApplyButton.Size = UDim2.new(1, -10, 0, 30)
+ApplyButton.Position = UDim2.new(0, 5, 0, 245)
+ApplyButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+ApplyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ApplyButton.TextScaled = true
+
+ApplyButton.MouseButton1Click:Connect(function()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        local ws = tonumber(WalkSpeedBox.Text)
+        local jp = tonumber(JumpPowerBox.Text)
+        if ws then hum.WalkSpeed = ws end
+        if jp then hum.JumpPower = jp end
+    end
+end)
+
+-- Minimize toggle
+local minimized = false
+MinimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    Content.Visible = not minimized
+end)
+
+-- Aim FOV Slider
+local fovLabel = Instance.new("TextLabel", Content)
+fovLabel.Text = "Aim FOV: 50%"
+fovLabel.Size = UDim2.new(1, -10, 0, 20)
+fovLabel.Position = UDim2.new(0, 5, 0, 285)
+fovLabel.BackgroundTransparency = 1
+fovLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+fovLabel.TextScaled = true
+fovLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local fovSlider = Instance.new("TextBox", Content)
+fovSlider.PlaceholderText = "0-100"
+fovSlider.Size = UDim2.new(1, -10, 0, 30)
+fovSlider.Position = UDim2.new(0, 5, 0, 310)
+fovSlider.ClearTextOnFocus = false
+fovSlider.Text = "50"
+
+local function getFOV()
+    local val = tonumber(fovSlider.Text)
+    if not val then val = 50 end
+    fovLabel.Text = "Aim FOV: "..val.."%"
+    return math.clamp(val,0,100)
+end
+
+-- ESP Folder
+local espFolder = Instance.new("Folder", ScreenGui)
+espFolder.Name = "ESPFolder"
+
+-- ESP Functions
+local function createPlayerESP(player)
+    if player == LocalPlayer then return end
+    if espFolder:FindFirstChild("ESP_"..player.Name) then return end
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ESP_"..player.Name
+    billboard.Adornee = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    billboard.Size = UDim2.new(0, 100, 0, 50)
+    billboard.AlwaysOnTop = true
+    local text = Instance.new("TextLabel", billboard)
+    text.Size = UDim2.new(1,0,1,0)
+    text.BackgroundTransparency = 1
+    text.TextColor3 = Color3.new(1,0,0)
+    text.TextScaled = true
+    billboard.Parent = espFolder
+end
+
+local function updatePlayerESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if espPlayersToggle() then
+            createPlayerESP(player)
+            local esp = espFolder:FindFirstChild("ESP_"..player.Name)
+            if esp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                esp.Adornee = player.Character.HumanoidRootPart
+                local distance = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                esp.TextLabel.Text = player.Name.." | "..math.floor(distance).." studs"
+            end
+        else
+            if espFolder:FindFirstChild("ESP_"..player.Name) then
+                espFolder["ESP_"..player.Name]:Destroy()
+            end
+        end
+    end
+end
+
+local function updateGunESP()
+    if not espGunsToggle() then
+        for _, v in pairs(espFolder:GetChildren()) do
+            if v.Name:find("Gun_") then v:Destroy() end
+        end
+        return
+    end
+
+    for _, tool in pairs(Workspace:GetDescendants()) do
+        if tool:IsA("Tool") and tool:FindFirstChild("Handle") and not espFolder:FindFirstChild("Gun_"..tool.Name) then
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "Gun_"..tool.Name
+            billboard.Adornee = tool.Handle
+            billboard.Size = UDim2.new(0, 100, 0, 30)
+            billboard.AlwaysOnTop = true
+            local text = Instance.new("TextLabel", billboard)
+            text.Size = UDim2.new(1,0,1,0)
+            text.BackgroundTransparency = 1
+            text.Text = tool.Name
+            text.TextColor3 = Color3.new(0,1,0)
+            text.TextScaled = true
+            billboard.Parent = espFolder
+        end
+    end
+end
+
+-- Aim Functions with FOV & Head Lock (shooting stick)
+local function getClosestTarget(headOnly)
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    local mousePos = UserInputService:GetMouseLocation()
+    local fovRadius = getFOV() * 10 -- scale to pixels
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local part = headOnly and player.Character:FindFirstChild("Head") or player.Character:FindFirstChild("HumanoidRootPart")
+            if part then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+                if onScreen then
+                    local distance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(mousePos.X, mousePos.Y)).Magnitude
+                    if distance < fovRadius and distance < shortestDistance then
+                        shortestDistance = distance
+                        closestPlayer = player
+                    end
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+-- Aim Stick Loop (applies while shooting)
+RunService.RenderStepped:Connect(function()
+    if aimStickToggle() or headAimToggle() then
+        local headOnly = headAimToggle()
+        local target = getClosestTarget(headOnly)
+        if target then
