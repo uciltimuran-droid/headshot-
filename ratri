@@ -1,0 +1,441 @@
+-- MXPLOIT Panel Script v2.0 - Enhanced FPS Cheat for Roblox (Delta Compatible)
+-- Ultra-smooth aimbot, modern UI, bulletproof logic. Educational use only.
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Wait for character
+LocalPlayer.CharacterAdded:Wait()
+wait(1)
+
+-- CoreGui for exploit compatibility
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MXPLOIT_v2"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 999999
+ScreenGui.Parent = game:GetService("CoreGui")
+
+-- Modern Main Panel (Cooler Design)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 260, 0, 320)
+MainFrame.Position = UDim2.new(0, 50, 0, 50)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+
+-- Gradient Background
+local UIGradient = Instance.new("UIGradient")
+UIGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 25))
+}
+UIGradient.Rotation = 45
+UIGradient.Parent = MainFrame
+
+-- Main Corner
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = MainFrame
+
+-- Stroke
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(100, 100, 150)
+MainStroke.Thickness = 1.5
+MainStroke.Transparency = 0.5
+MainStroke.Parent = MainFrame
+
+-- Modern Title Bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 45)
+TitleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+
+local TitleGradient = Instance.new("UIGradient")
+TitleGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 60)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 35))
+}
+TitleGradient.Parent = TitleBar
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 12)
+TitleCorner.Parent = TitleBar
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -50, 1, 0)
+TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "⚡ MXPLOIT v2.0"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 16
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TitleBar
+
+-- Minimize Button (Modern)
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Size = UDim2.new(0, 35, 0, 35)
+MinimizeBtn.Position = UDim2.new(1, -45, 0.5, -17.5)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+MinimizeBtn.Text = "−"
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.TextSize = 20
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.Parent = TitleBar
+
+local MinCorner = Instance.new("UICorner")
+MinCorner.CornerRadius = UDim.new(0, 8)
+MinCorner.Parent = MinimizeBtn
+
+-- Content Frame
+local ContentFrame = Instance.new("ScrollingFrame")
+ContentFrame.Size = UDim2.new(1, -20, 1, -65)
+ContentFrame.Position = UDim2.new(0, 10, 0, 55)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.BorderSizePixel = 0
+ContentFrame.ScrollBarThickness = 4
+ContentFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 150)
+ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 400)
+ContentFrame.Parent = MainFrame
+
+-- UI List Layout
+local UIList = Instance.new("UIListLayout")
+UIList.Padding = UDim.new(0, 8)
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Parent = ContentFrame
+
+-- Draggable System (Fixed & Smooth)
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
+local function updateDrag(input)
+    if dragging then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateDrag(input)
+    end
+end)
+
+-- Minimize System (Fixed)
+local minimized = false
+MinimizeBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    ContentFrame.Visible = not minimized
+    
+    local targetText = minimized and "✚" or "−"
+    local targetColor = minimized and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100)
+    
+    TweenService:Create(MinimizeBtn, TweenInfo.new(0.2), {Text = targetText, BackgroundColor3 = targetColor}):Play()
+end)
+
+-- Feature Variables
+local espEnabled = false
+local aimbotEnabled = false
+local aimTarget = "Head"
+local fovSize = 75
+local smoothSpeed = 0.12
+
+-- Modern Toggle Button Function
+local function createToggle(name, pos, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 45)
+    frame.LayoutOrder = pos
+    frame.BackgroundTransparency = 1
+    frame.Parent = ContentFrame
+    
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+    btn.Text = name .. ": OFF"
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.TextSize = 14
+    btn.Font = Enum.Font.Gotham
+    btn.Parent = frame
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 10)
+    btnCorner.Parent = btn
+    
+    local btnStroke = Instance.new("UIStroke")
+    btnStroke.Color = Color3.fromRGB(70, 70, 90)
+    btnStroke.Thickness = 1
+    btnStroke.Parent = btn
+    
+    btn.MouseButton1Click:Connect(function()
+        callback(btn)
+    end)
+    
+    return btn
+end
+
+-- ESP Toggle
+local espBtn = createToggle("👁️ ESP", 1, function(btn)
+    espEnabled = not espEnabled
+    btn.Text = "👁️ ESP: " .. (espEnabled and "ON" or "OFF")
+    btn.TextColor3 = espEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(200, 200, 200)
+    
+    if espEnabled then
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(35, 60, 35)}):Play()
+    else
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(45, 45, 60)}):Play()
+    end
+end)
+
+-- Aimbot Toggle
+local aimbotBtn = createToggle("🎯 Aimbot", 2, function(btn)
+    aimbotEnabled = not aimbotEnabled
+    btn.Text = "🎯 Aimbot: " .. (aimbotEnabled and "ON" or "OFF")
+    btn.TextColor3 = aimbotEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(200, 200, 200)
+    
+    if aimbotEnabled then
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(35, 60, 35)}):Play()
+    else
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(45, 45, 60)}):Play()
+    end
+end)
+
+-- Target Switch
+local targetBtn = createToggle("💀 Target: Head", 3, function(btn)
+    aimTarget = aimTarget == "Head" and "HumanoidRootPart" or "Head"
+    btn.Text = "💀 Target: " .. (aimTarget == "Head" and "Head" or "Body")
+end)
+
+-- FOV Slider (Modern)
+local fovFrame = Instance.new("Frame")
+fovFrame.Size = UDim2.new(1, 0, 0, 50)
+fovFrame.LayoutOrder = 4
+fovFrame.BackgroundTransparency = 1
+fovFrame.Parent = ContentFrame
+
+local fovLabel = Instance.new("TextLabel")
+fovLabel.Size = UDim2.new(1, 0, 0.6, 0)
+fovLabel.BackgroundTransparency = 1
+fovLabel.Text = "🎪 FOV: " .. fovSize .. "%"
+fovLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+fovLabel.TextSize = 14
+fovLabel.Font = Enum.Font.Gotham
+fovLabel.TextXAlignment = Enum.TextXAlignment.Left
+fovLabel.Parent = fovFrame
+
+local fovSlider = Instance.new("TextButton")
+fovSlider.Size = UDim2.new(1, 0, 0.4, 0)
+fovSlider.Position = UDim2.new(0, 0, 0.6, 0)
+fovSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+fovSlider.Text = ""
+fovSlider.Parent = fovFrame
+
+local fovCorner = Instance.new("UICorner")
+fovCorner.CornerRadius = UDim.new(0, 6)
+fovCorner.Parent = fovSlider
+
+-- FOV Slider Logic
+local sliding = false
+fovSlider.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        sliding = true
+    end
+end)
+
+fovSlider.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        sliding = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local percent = math.clamp((input.Position.X - fovSlider.AbsolutePosition.X) / fovSlider.AbsoluteSize.X, 0, 1)
+        fovSize = math.floor(percent * 100)
+        fovLabel.Text = "🎪 FOV: " .. fovSize .. "%"
+        
+        local fillSize = UDim2.new(percent, 0, 1, 0)
+        TweenService:Create(fovSlider, TweenInfo.new(0.1), {Size = fillSize}):Play()
+    end
+end)
+
+-- Bulletproof ESP System
+local espObjects = {}
+
+local function cleanupEsp(player)
+    if espObjects[player] then
+        for _, obj in pairs(espObjects[player]) do
+            if obj and obj.Remove then obj:Remove() end
+        end
+        espObjects[player] = nil
+    end
+end
+
+local function createEsp(player)
+    if player == LocalPlayer then return end
+    
+    local esp = {
+        text = Drawing.new("Text"),
+        distance = 0
+    }
+    
+    esp.text.Color = Color3.fromRGB(255, 255, 255)
+    esp.text.Size = 18
+    esp.text.Outline = true
+    esp.text.OutlineColor = Color3.fromRGB(0, 0, 0)
+    esp.text.Center = true
+    esp.text.Visible = false
+    
+    espObjects[player] = esp
+end
+
+-- Ultra-Smooth Aimbot System
+local fovCircle = Drawing.new("Circle")
+fovCircle.Color = Color3.fromRGB(255, 100, 100)
+fovCircle.Thickness = 3
+fovCircle.NumSides = 128
+fovCircle.Filled = false
+fovCircle.Transparency = 0.8
+fovCircle.Visible = false
+
+local currentTarget = nil
+local targetHistory = {}
+
+local function getBestTarget()
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        return nil
+    end
+    
+    local mousePos = UserInputService:GetMouseLocation()
+    local closest = nil
+    local closestDist = math.huge
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        
+        local char = player.Character
+        if not char then continue end
+        
+        local humanoid = char:FindFirstChild("Humanoid")
+        local targetPart = char:FindFirstChild(aimTarget)
+        if not humanoid or not targetPart or humanoid.Health <= 0 then continue end
+        
+        local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+        if onScreen then
+            local screenPoint = Vector2.new(screenPos.X, screenPos.Y)
+            local dist = (screenPoint - mousePos).Magnitude
+            
+            local fovRadius = (fovSize / 100) * math.min(Camera.ViewportSize.X, Camera.ViewportSize.Y) / 2
+            if dist < fovRadius and dist < closestDist then
+                closestDist = dist
+                closest = targetPart
+            end
+        end
+    end
+    
+    return closest
+end
+
+-- Main Render Loop (60 FPS Optimized)
+local renderConnection
+renderConnection = RunService.RenderStepped:Connect(function()
+    -- FOV Circle
+    local center = UserInputService:GetMouseLocation()
+    local radius = (fovSize / 100) * math.min(Camera.ViewportSize.X, Camera.ViewportSize.Y) / 2
+    
+    fovCircle.Position = center
+    fovCircle.Radius = radius
+    fovCircle.Visible = aimbotEnabled
+    
+    -- ESP Updates
+    for player, esp in pairs(espObjects) do
+        if espEnabled and player.Character and player.Character:FindFirstChild("Head") and 
+           LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            
+            local headPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+            if onScreen then
+                local distance = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                esp.distance = distance
+                
+                esp.text.Text = string.format("%s\n%.0fm", player.Name, distance)
+                esp.text.Position = Vector2.new(headPos.X, headPos.Y - 40)
+                esp.text.Visible = true
+            else
+                esp.text.Visible = false
+            end
+        else
+            esp.text.Visible = false
+        end
+    end
+    
+    -- Ultra-Smooth Aimbot
+    if aimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        currentTarget = getBestTarget()
+        
+        if currentTarget then
+            -- Predict movement (advanced)
+            local targetPos = currentTarget.Position
+            local velocity = currentTarget.Parent:FindFirstChild("HumanoidRootPart") and 
+                           currentTarget.Parent.HumanoidRootPart.Velocity or Vector3.new()
+            
+            -- Simple prediction
+            targetPos = targetPos + velocity * 0.1
+            
+            -- Smooth camera interpolation
+            local cameraPos = Camera.CFrame.Position
+            local targetCFrame = CFrame.lookAt(cameraPos, targetPos)
+            
+            Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, smoothSpeed)
+        end
+    else
+        currentTarget = nil
+    end
+end)
+
+-- Initialize ESP
+for _, player in ipairs(Players:GetPlayers()) do
+    createEsp(player)
+end
+
+Players.PlayerAdded:Connect(createEsp)
+Players.PlayerRemoving:Connect(cleanupEsp)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    wait(1)
+    for _, player in ipairs(Players:GetPlayers()) do
+        cleanupEsp(player)
+        createEsp(player)
+    end
+end)
+
+-- Cleanup
+ScreenGui.Destroying:Connect(function()
+    renderConnection:Disconnect()
+    fovCircle:Remove()
+    for player, _ in pairs(espObjects) do
+        cleanupEsp(player)
+    end
+end)
+
+print("🚀 MXPLOIT v2.0 LOADED - Ultra-smooth aimbot active!")
