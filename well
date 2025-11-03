@@ -1,0 +1,343 @@
+-- MXPLOIT Panel Script for Roblox FPS Games
+-- Note: This script is for educational purposes only. Using cheats in Roblox violates Terms of Service and can result in bans.
+-- Tested for Delta compatibility. Ensure Delta supports Drawing API and UserInputService.
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Create ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MXPLOIT"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true -- Ensure GUI isn't offset by Roblox's topbar
+ScreenGui.Parent = game:GetService("CoreGui") -- Use CoreGui for Delta compatibility
+
+-- Create Main Frame (Panel)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 200, 0, 250)
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -125)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Parent = ScreenGui
+
+-- Add UICorner for rounded edges
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
+
+-- Title Bar
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, 0, 0, 30)
+TitleLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+TitleLabel.Text = "MXPLOIT"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 18
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.Parent = MainFrame
+
+-- Minimize Button
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
+MinimizeButton.Position = UDim2.new(1, -30, 0, 0)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+MinimizeButton.Text = "-"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.TextSize = 14
+MinimizeButton.Parent = TitleLabel
+
+-- Content Frame
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Size = UDim2.new(1, 0, 1, -30)
+ContentFrame.Position = UDim2.new(0, 0, 0, 30)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Parent = MainFrame
+
+-- Make Panel Draggable
+local dragToggle = nil
+local dragStart = nil
+local startPos = nil
+
+local function updateInput(input)
+    if dragToggle then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end
+
+TitleLabel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragToggle = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragToggle = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateInput(input)
+    end
+end)
+
+-- Minimize Functionality
+local isMinimized = false
+MinimizeButton.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    ContentFrame.Visible = not isMinimized
+    MinimizeButton.Text = isMinimized and "+" or "-"
+end)
+
+-- Features
+local espToggle = false
+local aimbotToggle = false
+local aimPart = "Head" -- "Head" or "HumanoidRootPart"
+local fovValue = 50 -- 1-100%
+
+-- ESP Toggle Button
+local EspButton = Instance.new("TextButton")
+EspButton.Size = UDim2.new(1, -10, 0, 40)
+EspButton.Position = UDim2.new(0, 5, 0, 5)
+EspButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+EspButton.Text = "ESP: Off"
+EspButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+EspButton.TextSize = 14
+EspButton.Parent = ContentFrame
+
+EspButton.MouseButton1Click:Connect(function()
+    espToggle = not espToggle
+    EspButton.Text = "ESP: " .. (espToggle and "On" or "Off")
+end)
+
+-- Aimbot Toggle Button
+local AimbotButton = Instance.new("TextButton")
+AimbotButton.Size = UDim2.new(1, -10, 0, 40)
+AimbotButton.Position = UDim2.new(0, 5, 0, 50)
+AimbotButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+AimbotButton.Text = "Aimbot: Off"
+AimbotButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AimbotButton.TextSize = 14
+AimbotButton.Parent = ContentFrame
+
+AimbotButton.MouseButton1Click:Connect(function()
+    aimbotToggle = not aimbotToggle
+    AimbotButton.Text = "Aimbot: " .. (aimbotToggle and "On" or "Off")
+end)
+
+-- Aim Part Switch Button
+local AimPartButton = Instance.new("TextButton")
+AimPartButton.Size = UDim2.new(1, -10, 0, 40)
+AimPartButton.Position = UDim2.new(0, 5, 0, 95)
+AimPartButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+AimPartButton.Text = "Aim Part: Head"
+AimPartButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AimPartButton.TextSize = 14
+AimPartButton.Parent = ContentFrame
+
+AimPartButton.MouseButton1Click:Connect(function()
+    aimPart = (aimPart == "Head") and "HumanoidRootPart" or "Head"
+    AimPartButton.Text = "Aim Part: " .. (aimPart == "Head" and "Head" or "Body")
+end)
+
+-- FOV Value Input
+local FovLabel = Instance.new("TextLabel")
+FovLabel.Size = UDim2.new(1, -10, 0, 40)
+FovLabel.Position = UDim2.new(0, 5, 0, 140)
+FovLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+FovLabel.Text = "FOV (1-100%):"
+FovLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+FovLabel.TextSize = 14
+FovLabel.Parent = ContentFrame
+
+local FovBox = Instance.new("TextBox")
+FovBox.Size = UDim2.new(0.5, -5, 0, 30)
+FovBox.Position = UDim2.new(0.5, 0, 0, 5)
+FovBox.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+FovBox.Text = tostring(fovValue)
+FovBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+FovBox.TextSize = 14
+FovBox.Parent = FovLabel
+
+FovBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local num = tonumber(FovBox.Text)
+        if num and num >= 1 and num <= 100 then
+            fovValue = num
+        else
+            FovBox.Text = tostring(fovValue)
+        end
+    end
+end)
+
+-- ESP Logic
+local drawings = {}
+
+local function addEsp(player)
+    if player == LocalPlayer then return end
+
+    local text = Drawing.new("Text")
+    text.Visible = false
+    text.Color = Color3.fromRGB(255, 255, 255)
+    text.Size = 16
+    text.Outline = true
+    text.OutlineColor = Color3.fromRGB(0, 0, 0)
+    text.Center = true
+
+    drawings[player] = { text = text }
+
+    local function updateEsp()
+        if not espToggle or not player.Character or not player.Character:FindFirstChild("Humanoid") or player.Character.Humanoid.Health <= 0 or not player.Character:FindFirstChild("Head") or not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            text.Visible = false
+            return
+        end
+
+        local rootPos = LocalPlayer.Character.HumanoidRootPart.Position
+        local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+        if not targetRoot then
+            text.Visible = false
+            return
+        end
+
+        local distance = (rootPos - targetRoot.Position).Magnitude
+        local headPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+
+        if onScreen then
+            text.Text = string.format("%s [%.1f]", player.Name, distance)
+            text.Position = Vector2.new(headPos.X, headPos.Y - 30)
+            text.Visible = true
+        else
+            text.Visible = false
+        end
+    end
+
+    drawings[player].connection = RunService.RenderStepped:Connect(updateEsp)
+end
+
+local function removeEsp(player)
+    if drawings[player] then
+        if drawings[player].text then
+            drawings[player].text:Remove()
+        end
+        if drawings[player].connection then
+            drawings[player].connection:Disconnect()
+        end
+        drawings[player] = nil
+    end
+end
+
+-- Initialize ESP for existing players
+for _, player in ipairs(Players:GetPlayers()) do
+    addEsp(player)
+end
+
+-- Player Added/Removing
+Players.PlayerAdded:Connect(addEsp)
+Players.PlayerRemoving:Connect(removeEsp)
+
+-- Handle LocalPlayer Character Respawn
+LocalPlayer.CharacterAdded:Connect(function()
+    for _, player in ipairs(Players:GetPlayers()) do
+        removeEsp(player)
+        addEsp(player)
+    end
+end)
+
+-- Aimbot and FOV Circle Logic
+local fovCircle = Drawing.new("Circle")
+fovCircle.Visible = false
+fovCircle.Color = Color3.fromRGB(255, 0, 0)
+fovCircle.Thickness = 2
+fovCircle.NumSides = 100
+fovCircle.Filled = false
+
+local function isAiming()
+    return UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) -- Right mouse button
+end
+
+local function getClosestPlayerInFov()
+    local closest = nil
+    local minDist = math.huge
+    local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    local fovRadius = (fovValue / 100) * (Camera.ViewportSize.Y / 2) -- Dynamic FOV radius
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LocalPlayer or not player.Character or not player.Character:FindFirstChild("Humanoid") or player.Character.Humanoid.Health <= 0 or not player.Character:FindFirstChild(aimPart) then
+            continue
+        end
+
+        local targetPos = player.Character[aimPart].Position
+        local screenPos, onScreen = Camera:WorldToViewportPoint(targetPos)
+        if onScreen then
+            local screenVec = Vector2.new(screenPos.X, screenPos.Y)
+            local distToCenter = (screenVec - screenCenter).Magnitude
+            if distToCenter < fovRadius and distToCenter < minDist then
+                minDist = distToCenter
+                closest = player.Character[aimPart]
+            end
+        end
+    end
+
+    return closest
+end
+
+-- Smooth Aimbot Logic
+local aimbotConnection
+local function startAimbot()
+    if aimbotConnection then
+        aimbotConnection:Disconnect()
+    end
+    aimbotConnection = RunService.RenderStepped:Connect(function()
+        local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        local fovRadius = (fovValue / 100) * (Camera.ViewportSize.Y / 2)
+        
+        fovCircle.Position = screenCenter
+        fovCircle.Radius = fovRadius
+        fovCircle.Visible = aimbotToggle
+
+        if aimbotToggle and isAiming() then
+            local targetPart = getClosestPlayerInFov()
+            if targetPart then
+                local targetPos = targetPart.Position
+                local cameraPos = Camera.CFrame.Position
+                local direction = (targetPos - cameraPos).Unit
+                local lookAtCFrame = CFrame.new(cameraPos, targetPos)
+                
+                -- Smoothly interpolate camera rotation
+                local currentCFrame = Camera.CFrame
+                local t = 0.1 -- Smoothing factor (adjust for smoother/faster aim)
+                Camera.CFrame = currentCFrame:Lerp(lookAtCFrame, t)
+            end
+        end
+    end)
+end
+
+-- Start aimbot loop
+startAimbot()
+
+-- Toggle aimbot to restart connection if needed
+AimbotButton.MouseButton1Click:Connect(function()
+    aimbotToggle = not aimbotToggle
+    AimbotButton.Text = "Aimbot: " .. (aimbotToggle and "On" or "Off")
+    startAimbot() -- Restart aimbot loop to ensure fresh connection
+end)
+
+-- Cleanup on Script Destroy
+ScreenGui.Destroying:Connect(function()
+    for _, player in ipairs(Players:GetPlayers()) do
+        removeEsp(player)
+    end
+    fovCircle:Remove()
+    if aimbotConnection then
+        aimbotConnection:Disconnect()
+    end
+end)
+
+-- Debug: Ensure GUI is visible
+print("MXPLOIT GUI Loaded. If not visible, check Delta compatibility with CoreGui and Drawing API.")
