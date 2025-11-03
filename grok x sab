@@ -1,0 +1,489 @@
+-- mxsab hub for Steal a Brainrot
+-- This script creates a professional, draggable, and minimizable UI panel with various features.
+-- Note: This script assumes it's being run in a Roblox exploit environment that supports local script execution.
+-- Features like true invisibility and no-clip may require exploit capabilities beyond standard Roblox API.
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+-- Create ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.CoreGui  -- Use CoreGui for exploits to avoid filtering
+ScreenGui.Name = "mxsabHub"
+ScreenGui.ResetOnSpawn = false
+
+-- Main Frame (Panel)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 300, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true  -- Built-in draggable, but we'll enhance it
+MainFrame.Parent = ScreenGui
+
+-- Top Bar
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 30)
+TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+TopBar.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -60, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "mxsab hub"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 18
+Title.Font = Enum.Font.SourceSansBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+-- Minimize Button
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
+MinimizeButton.Position = UDim2.new(1, -60, 0, 0)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MinimizeButton.Text = "-"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.TextSize = 20
+MinimizeButton.Parent = TopBar
+
+-- Close Button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -30, 0, 0)
+CloseButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 20
+CloseButton.Parent = TopBar
+
+-- Content Frame (for features, toggled on minimize)
+local ContentFrame = Instance.new("ScrollingFrame")
+ContentFrame.Size = UDim2.new(1, 0, 1, -30)
+ContentFrame.Position = UDim2.new(0, 0, 0, 30)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.ScrollBarThickness = 5
+ContentFrame.Parent = MainFrame
+
+-- UI List Layout for content
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Padding = UDim.new(0, 10)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Parent = ContentFrame
+
+-- Make MainFrame draggable with smooth animation (enhanced)
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+local function updateInput(input)
+    local delta = input.Position - dragStart
+    local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    local Tween = TweenService:Create(MainFrame, TweenInfo.new(0.1), {Position = position})
+    Tween:Play()
+end
+
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+TopBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        updateInput(input)
+    end
+end)
+
+-- Minimize Functionality
+local minimized = false
+MinimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        MinimizeButton.Text = "+"
+        ContentFrame.Visible = false
+        MainFrame.Size = UDim2.new(0, 300, 0, 30)
+    else
+        MinimizeButton.Text = "-"
+        ContentFrame.Visible = true
+        MainFrame.Size = UDim2.new(0, 300, 0, 400)
+    end
+end)
+
+-- Close Functionality
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Helper function to create Toggle Button
+local function createToggle(name, callback)
+    local ToggleFrame = Instance.new("Frame")
+    ToggleFrame.Size = UDim2.new(1, 0, 0, 30)
+    ToggleFrame.BackgroundTransparency = 1
+    ToggleFrame.Parent = ContentFrame
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(0.7, 0, 1, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = name
+    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Label.TextSize = 16
+    Label.Font = Enum.Font.SourceSans
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = ToggleFrame
+
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Size = UDim2.new(0.3, 0, 1, 0)
+    ToggleButton.Position = UDim2.new(0.7, 0, 0, 0)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    ToggleButton.Text = "OFF"
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+    ToggleButton.TextSize = 16
+    ToggleButton.Parent = ToggleFrame
+
+    local enabled = false
+    ToggleButton.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        if enabled then
+            ToggleButton.Text = "ON"
+            ToggleButton.TextColor3 = Color3.fromRGB(0, 255, 0)
+        else
+            ToggleButton.Text = "OFF"
+            ToggleButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+        end
+        callback(enabled)
+    end)
+
+    return ToggleFrame
+end
+
+-- Helper function to create Slider/Input for numbers
+local function createInput(name, default, callback)
+    local InputFrame = Instance.new("Frame")
+    InputFrame.Size = UDim2.new(1, 0, 0, 30)
+    InputFrame.BackgroundTransparency = 1
+    InputFrame.Parent = ContentFrame
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(0.5, 0, 1, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = name
+    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Label.TextSize = 16
+    Label.Font = Enum.Font.SourceSans
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = InputFrame
+
+    local TextBox = Instance.new("TextBox")
+    TextBox.Size = UDim2.new(0.3, 0, 1, 0)
+    TextBox.Position = UDim2.new(0.5, 0, 0, 0)
+    TextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextBox.TextSize = 16
+    TextBox.Text = tostring(default)
+    TextBox.Parent = InputFrame
+
+    local ApplyButton = Instance.new("TextButton")
+    ApplyButton.Size = UDim2.new(0.2, 0, 1, 0)
+    ApplyButton.Position = UDim2.new(0.8, 0, 0, 0)
+    ApplyButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    ApplyButton.Text = "Apply"
+    ApplyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ApplyButton.TextSize = 16
+    ApplyButton.Parent = InputFrame
+
+    ApplyButton.MouseButton1Click:Connect(function()
+        local value = tonumber(TextBox.Text)
+        if value then
+            callback(value)
+        end
+    end)
+
+    return InputFrame
+end
+
+-- Feature: Instant Steal
+-- Assuming "steal" is a game mechanic; this example instantly triggers steal on nearby targets.
+-- Adjust based on game specifics (e.g., find steal function or event).
+createToggle("Instant Steal", function(enabled)
+    if enabled then
+        local connection
+        connection = RunService.Heartbeat:Connect(function()
+            if LocalPlayer.Character then
+                -- Logic: Find nearest player or object to steal from
+                local nearest = nil
+                local minDist = math.huge
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and player.Character then
+                        local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                        if dist < minDist and dist < 10 then  -- Within 10 studs
+                            nearest = player.Character
+                            minDist = dist
+                        end
+                    end
+                end
+                if nearest then
+                    -- Trigger steal; this is placeholder - find actual remote event or function in game
+                    -- e.g., fireServer on a RemoteEvent named "StealEvent"
+                    local stealEvent = game.ReplicatedStorage:FindFirstChild("StealEvent")  -- Adjust name
+                    if stealEvent then
+                        stealEvent:FireServer(nearest)
+                    end
+                end
+            end
+        end)
+        -- Store connection to disconnect later
+        getgenv().instantStealConn = connection
+    else
+        if getgenv().instantStealConn then
+            getgenv().instantStealConn:Disconnect()
+        end
+    end
+end)
+
+-- Feature: Anti-Hit (Godmode - prevent damage)
+createToggle("Anti-Hit", function(enabled)
+    if enabled then
+        local oldHealth = LocalPlayer.Character.Humanoid.Health
+        local connection = LocalPlayer.Character.Humanoid.HealthChanged:Connect(function(health)
+            if health < oldHealth then
+                LocalPlayer.Character.Humanoid.Health = oldHealth
+            else
+                oldHealth = health
+            end
+        end)
+        getgenv().antiHitConn = connection
+    else
+        if getgenv().antiHitConn then
+            getgenv().antiHitConn:Disconnect()
+        end
+    end
+end)
+
+-- Feature: Invisible (not just visual - attempt server-side by removing character parts)
+createToggle("Invisible", function(enabled)
+    if enabled then
+        if LocalPlayer.Character then
+            for _, part in ipairs(LocalPlayer.Character:GetChildren()) do
+                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                    part.Transparency = 1
+                    -- For server-side: Clone and destroy original? But exploits needed for true server invis.
+                    -- Placeholder: Use exploit to set network ownership or remove from workspace temporarily.
+                    -- Assuming exploit like setsimulationradius for ownership.
+                    game:GetService("Players").LocalPlayer.ReplicationFocus = workspace
+                    game:GetService("Players").LocalPlayer.MaximumSimulationRadius = math.huge
+                    game:GetService("Players").LocalPlayer.SimulationRadius = math.huge
+                    part.Anchored = true  -- Prevent falling, but this is client-side.
+                    -- True server invis requires more advanced exploits like detaching character.
+                end
+                if part:IsA("Accessory") then
+                    part.Handle.Transparency = 1
+                end
+            end
+            LocalPlayer.Character.HumanoidRootPart.Transparency = 1  -- Hide root too, but careful.
+        end
+    else
+        if LocalPlayer.Character then
+            for _, part in ipairs(LocalPlayer.Character:GetChildren()) do
+                if part:IsA("BasePart") then
+                    part.Transparency = 0
+                    part.Anchored = false
+                end
+                if part:IsA("Accessory") then
+                    part.Handle.Transparency = 0
+                end
+            end
+            LocalPlayer.Character.HumanoidRootPart.Transparency = 0
+        end
+    end
+end)
+
+-- Feature: Universal No Clip (except floor)
+-- No clip through walls but not floor - clip only on Y axis check.
+createToggle("Universal No Clip", function(enabled)
+    if enabled then
+        local connection = RunService.Stepped:Connect(function()
+            if LocalPlayer.Character then
+                for _, part in ipairs(LocalPlayer.Character:GetChildren()) do
+                    if part:IsA("BasePart") and part.CanCollide then
+                        -- Disable collision except for floor (check if part is below)
+                        -- Logic: Temporarily set CanCollide false, but restore for floor.
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+        getgenv().noClipConn = connection
+    else
+        if getgenv().noClipConn then
+            getgenv().noClipConn:Disconnect()
+        end
+        if LocalPlayer.Character then
+            for _, part in ipairs(LocalPlayer.Character:GetChildren()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+    end
+end)
+-- To prevent falling through floor, add a raycast check in no clip loop.
+-- Enhance the connection:
+-- In the enabled block, modify to:
+-- local connection = RunService.Stepped:Connect(function(time, dt)
+--     if LocalPlayer.Character then
+--         local root = LocalPlayer.Character.HumanoidRootPart
+--         local ray = Ray.new(root.Position, Vector3.new(0, -5, 0))  -- Check below
+--         local hit, pos = workspace:FindPartOnRay(ray, LocalPlayer.Character)
+--         if hit then
+--             -- If floor below, enable collision for feet or something, but simplify: Anchor if falling.
+--             -- Alternative: Set CanCollide false only if not moving down.
+--         else
+--             for _, part in ipairs(LocalPlayer.Character:GetChildren()) do
+--                 if part:IsA("BasePart") then
+--                     part.CanCollide = false
+--                 end
+--             end
+--         end
+--     end
+-- end)
+
+-- Feature: Set Jump Power
+createInput("Set Jump Power", 50, function(value)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.JumpPower = value
+    end
+end)
+
+-- Feature: Set Walk Speed
+createInput("Set Walk Speed", 16, function(value)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = value
+    end
+end)
+
+-- Other Useful Things: Add Fly
+createToggle("Fly", function(enabled)
+    if enabled then
+        local speed = 50
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.Velocity = Vector3.new(0,0,0)
+        bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bodyVelocity.Parent = LocalPlayer.Character.HumanoidRootPart
+
+        local bodyGyro = Instance.new("BodyGyro")
+        bodyGyro.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+        bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bodyGyro.P = 9000
+        bodyGyro.Parent = LocalPlayer.Character.HumanoidRootPart
+
+        local keys = {W = false, A = false, S = false, D = false, Space = false, LeftControl = false}
+
+        local inputBegan = UserInputService.InputBegan:Connect(function(input)
+            if input.KeyCode == Enum.KeyCode.W then keys.W = true end
+            if input.KeyCode == Enum.KeyCode.A then keys.A = true end
+            if input.KeyCode == Enum.KeyCode.S then keys.S = true end
+            if input.KeyCode == Enum.KeyCode.D then keys.D = true end
+            if input.KeyCode == Enum.KeyCode.Space then keys.Space = true end
+            if input.KeyCode == Enum.KeyCode.LeftControl then keys.LeftControl = true end
+        end)
+
+        local inputEnded = UserInputService.InputEnded:Connect(function(input)
+            if input.KeyCode == Enum.KeyCode.W then keys.W = false end
+            if input.KeyCode == Enum.KeyCode.A then keys.A = false end
+            if input.KeyCode == Enum.KeyCode.S then keys.S = false end
+            if input.KeyCode == Enum.KeyCode.D then keys.D = false end
+            if input.KeyCode == Enum.KeyCode.Space then keys.Space = false end
+            if input.KeyCode == Enum.KeyCode.LeftControl then keys.LeftControl = false end
+        end)
+
+        local loop = RunService.RenderStepped:Connect(function()
+            local cam = workspace.CurrentCamera
+            local vel = Vector3.new(0,0,0)
+
+            if keys.W then vel = vel + cam.CFrame.LookVector end
+            if keys.S then vel = vel - cam.CFrame.LookVector end
+            if keys.D then vel = vel + cam.CFrame.RightVector end
+            if keys.A then vel = vel - cam.CFrame.RightVector end
+            if keys.Space then vel = vel + Vector3.new(0,1,0) end
+            if keys.LeftControl then vel = vel - Vector3.new(0,1,0) end
+
+            bodyVelocity.Velocity = vel * speed
+            bodyGyro.CFrame = cam.CFrame
+        end)
+
+        getgenv().flyConns = {inputBegan, inputEnded, loop}
+        getgenv().flyInstances = {bodyVelocity, bodyGyro}
+    else
+        for _, conn in ipairs(getgenv().flyConns or {}) do
+            conn:Disconnect()
+        end
+        for _, inst in ipairs(getgenv().flyInstances or {}) do
+            inst:Destroy()
+        end
+    end
+end)
+
+-- Other: ESP (Wallhack for players)
+createToggle("ESP", function(enabled)
+    if enabled then
+        local function addESP(player)
+            if player ~= LocalPlayer and player.Character then
+                local highlight = Instance.new("Highlight")
+                highlight.FillTransparency = 0.5
+                highlight.OutlineTransparency = 0
+                highlight.Parent = player.Character
+                highlight.Adornee = player.Character
+            end
+        end
+        for _, player in ipairs(Players:GetPlayers()) do
+            addESP(player)
+        end
+        local conn = Players.PlayerAdded:Connect(addESP)
+        getgenv().espConn = conn
+    else
+        if getgenv().espConn then
+            getgenv().espConn:Disconnect()
+        end
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player.Character and player.Character:FindFirstChildOfClass("Highlight") then
+                player.Character.Highlight:Destroy()
+            end
+        end
+    end
+end)
+
+-- Adjust ContentFrame CanvasSize based on children
+UIListLayout.Changed:Connect(function()
+    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 20)
+end)
+
+-- Respawn handling: Reapply features on character respawn
+LocalPlayer.CharacterAdded:Connect(function(char)
+    -- Reapply active features if toggled on
+    -- This requires tracking which are enabled, but for simplicity, user can retoggle.
+end)
+
+-- Initial open animation
+MainFrame.Position = UDim2.new(0.5, -150, 1, 0)  -- Start below screen
+local openTween = TweenService:Create(MainFrame, TweenInfo.new(0.5), {Position = UDim2.new(0.5, -150, 0.5, -200)})
+openTween:Play()
